@@ -14,8 +14,3 @@
 Route::get('/', function () {
     return view('welcome');
 });
-
-Route::namespace('Api')->group(function () {
-    Route::get('/users', "UserController@index");
-    Route::get('/user_groups', "UserGroupController@index");
-});

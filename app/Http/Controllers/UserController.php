@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
+use Auth;
 use App\Services\UserService;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 
 class UserController extends Controller
 {
@@ -20,5 +19,17 @@ class UserController extends Controller
 
         return response()
             ->json($users);
+    }
+
+    public function user($id = false, UserService $userService)
+    {
+        if (!$id) {
+            $user = Auth::user();
+        } else {
+            $user = $userService->findUserById($id);
+        }
+
+        return response()
+            ->json($user);
     }
 }
