@@ -22,6 +22,7 @@ class CreateTaskHoursTable extends Migration
             $table->integer('time');
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->integer('task_id')->nullable()->unsigned();
             $table->foreign('task_id')->references('id')->on('tasks');

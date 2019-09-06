@@ -79,19 +79,19 @@ class User extends Authenticatable
     /**
      * @return string
      */
-    public function label()
+    public function badge()
     {
         switch ($this->status) {
             case UserStatusConstant::ACTIVE:
-                return 'label label-success';
+                return 'badge badge-success';
                 break;
 
             case UserStatusConstant::INACTIVE:
-                return 'label label-warning';
+                return 'badge badge-warning';
                 break;
 
             default:
-                return 'label label-success';
+                return 'badge badge-success';
                 break;
         }
     }

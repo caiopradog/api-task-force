@@ -27,6 +27,7 @@ class CreateEpicsTable extends Migration
             $table->integer('user_deleted_id')->nullable()->unsigned();
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('project_id')->references('id')->on('projects');
             $table->foreign('user_created_id')->references('id')->on('users');

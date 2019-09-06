@@ -23,6 +23,7 @@ class CreateProjectsTable extends Migration
             $table->date('deadline');
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->integer('user_created_id')->nullable()->unsigned();
             $table->integer('user_updated_id')->nullable()->unsigned();

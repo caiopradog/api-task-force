@@ -20,6 +20,7 @@ class CreateUserSkillsTable extends Migration
             $table->enum('skill', $category->toArray());
             $table->integer('level');
             $table->timestamps();
+            $table->softDeletes();
 
         });
     }

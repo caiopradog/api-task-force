@@ -23,8 +23,8 @@ class CreateTasksTable extends Migration
             $table->string('name');
             $table->text('description');
             $table->date('deadline');
-            $table->integer('time_planned');
-            $table->integer('time_used');
+            $table->integer('time_planned')->default(0);
+            $table->integer('time_used')->default(0);
             $table->integer('priority')->unsigned();
 
             $table->integer('project_id')->unsigned();
@@ -37,6 +37,7 @@ class CreateTasksTable extends Migration
             $table->integer('user_deleted_id')->nullable()->unsigned();
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('project_id')->references('id')->on('projects');
             $table->foreign('epic_id')->references('id')->on('epics');

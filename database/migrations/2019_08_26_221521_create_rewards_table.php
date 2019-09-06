@@ -22,6 +22,7 @@ class CreateRewardsTable extends Migration
             $table->text('description');
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

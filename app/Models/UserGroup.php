@@ -33,19 +33,19 @@ class UserGroup extends Model
     /**
      * @return string
      */
-    public function label()
+    public function badge()
     {
         switch ($this->status) {
             case UserGroupStatusConstant::ACTIVE:
-                return 'label label-success';
+                return 'badge badge-success';
                 break;
 
             case UserGroupStatusConstant::INACTIVE:
-                return 'label label-warning';
+                return 'badge badge-warning';
                 break;
 
             default:
-                return 'label label-success';
+                return 'badge badge-success';
                 break;
         }
     }

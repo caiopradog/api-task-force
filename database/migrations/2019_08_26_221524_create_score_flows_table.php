@@ -20,6 +20,7 @@ class CreateScoreFlowsTable extends Migration
             $table->integer('type');
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->integer('reward_id')->nullable()->unsigned();
             $table->integer('user_id')->nullable()->unsigned();

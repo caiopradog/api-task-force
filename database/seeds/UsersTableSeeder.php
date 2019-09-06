@@ -14,11 +14,44 @@ class UsersTableSeeder extends Seeder
      */
     public function run()
     {
-        $user = App\Models\User::create([
+        App\Models\User::create([
             'user_group_id' => '1',
             'name' => 'Caio do Prado',
-            'email' => 'caio.dopradogralho@gmail.com',
+            'email' => 'caio',
             'password' => Hash::make('caio123!@#'),
+            'api_token' => \Illuminate\Support\Str::random(80)
+        ])->assignRole(\App\Models\UserGroup::first()->name);
+
+        App\Models\User::create([
+            'user_group_id' => '1',
+            'name' => 'Eduardo Fagundes',
+            'email' => 'edu',
+            'password' => Hash::make('edu123'),
+            'api_token' => \Illuminate\Support\Str::random(80)
+        ])->assignRole(\App\Models\UserGroup::first()->name);
+
+        App\Models\User::create([
+            'user_group_id' => '1',
+            'name' => 'Leonardo Kenji',
+            'email' => 'leo',
+            'password' => Hash::make('leo123'),
+            'api_token' => \Illuminate\Support\Str::random(80)
+        ])->assignRole(\App\Models\UserGroup::first()->name);
+
+        App\Models\User::create([
+            'user_group_id' => '1',
+            'name' => 'Henrique Chinen',
+            'email' => 'henrique',
+            'password' => Hash::make('henrique123'),
+            'api_token' => \Illuminate\Support\Str::random(80)
+        ])->assignRole(\App\Models\UserGroup::first()->name);
+
+        App\Models\User::create([
+            'user_group_id' => '1',
+            'name' => 'Naiara Freire',
+            'email' => 'naiara',
+            'password' => Hash::make('naiara123'),
+            'api_token' => \Illuminate\Support\Str::random(80)
         ])->assignRole(\App\Models\UserGroup::first()->name);
     }
 }

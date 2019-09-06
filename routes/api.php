@@ -19,10 +19,22 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
 
 Route::post('/login', 'AuthController@login');
 Route::middleware('auth:api')->group(function () {
-    Route::get('/users', "UserController@index");
     Route::get('/user', "UserController@user");
     Route::get('/user/{id}', "UserController@user");
+    Route::get('/users', "UserController@index");
+
     Route::get('/user_group', "UserGroupController@userGroup");
     Route::get('/user_group/{id}', "UserGroupController@userGroup");
     Route::get('/user_groups', "UserGroupController@index");
+
+    Route::get('/task/{id}', "TasksController@task");
+    Route::get('/tasks', "TasksController@tasks");
+    Route::get('/task_categories', "TasksController@task_categories");
+    Route::get('/task_statuses', "TasksController@task_statuses");
+
+    Route::get('/task/{id}', "TasksController@task");
+    Route::get('/tasks', "TasksController@tasks");
+
+    Route::get('/project/{id}', "ProjectsController@project");
+    Route::get('/projects', "ProjectsController@projects");
 });

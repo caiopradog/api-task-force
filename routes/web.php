@@ -11,6 +11,6 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/task_categories', "TasksController@task_categories");
+Route::get('/task_statuses', "TasksController@task_statuses");
+Route::get('/teste', "TasksController@teste");

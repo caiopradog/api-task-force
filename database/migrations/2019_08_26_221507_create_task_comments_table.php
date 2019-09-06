@@ -19,6 +19,7 @@ class CreateTaskCommentsTable extends Migration
             $table->integer('type');
 
             $table->timestamps();
+            $table->softDeletes();
 
             $table->integer('task_id')->nullable()->unsigned();
             $table->foreign('task_id')->references('id')->on('tasks');
