@@ -37,4 +37,10 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('/project/{id}', "ProjectsController@project");
     Route::get('/projects', "ProjectsController@projects");
+
+    Route::get('/epic/{id}', "EpicsController@epic");
+    Route::get('/epics', "EpicsController@epics");
+
+    Route::get('/sprint/{id}', "SprintsController@sprint");
+    Route::get('/sprints', "SprintsController@sprints");
 });
