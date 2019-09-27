@@ -31,9 +31,10 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/tasks', "TasksController@tasks");
     Route::get('/task_categories', "TasksController@task_categories");
     Route::get('/task_statuses', "TasksController@task_statuses");
-
-    Route::get('/task/{id}', "TasksController@task");
-    Route::get('/tasks', "TasksController@tasks");
+    //Rotas para add/edit
+    Route::put('/task', "TasksController@add_task");
+    Route::put('/task/{id?}', "TasksController@edit_task");
+    Route::delete('/task/{id}', "TasksController@delete_task");
 
     Route::get('/project/{id}', "ProjectsController@project");
     Route::get('/projects', "ProjectsController@projects");

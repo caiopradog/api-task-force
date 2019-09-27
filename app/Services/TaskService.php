@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Task;
 use Cache;
+use Carbon\Carbon;
 use Mail;
 use DB;
 
@@ -112,6 +113,10 @@ class TaskService
      */
     public function create(Task $task)
     {
+        $task->time_planned = $this->convertTimeToSec($task->time_planned);
+        $task->time_used = $this->convertTimeToSec($task->time_used);
+        $task->deadline = Carbon::createFromTimeString($task->deadline)->format('Y-m-d');
+
         return $task->save();
     }
 
@@ -133,4 +138,9 @@ class TaskService
         return $task->delete();
     }
 
+    public function convertTimeToSec($time) {
+        $time = explode(':', $time);
+
+        return $time[0]*3600 + (isset($time[1]) ? $time[1]*60 : 0);
+    }
 }
