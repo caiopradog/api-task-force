@@ -35,6 +35,5 @@ class MenuTableSeeder extends Seeder
             $menu->save();
         });
         $this->command->info('Menu table Seeded');
-
     }
 }

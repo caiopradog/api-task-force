@@ -75,30 +75,38 @@ class Task extends Model
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function createdUser()
+    {
+        return $this->belongsTo(User::class, 'user_created_id');
+    }
+
+    /**
      * @return string
      */
-    public function badge()
+    public function status_color()
     {
         switch ($this->status) {
             case TasksStatusConstant::BACKLOG:
-                return 'badge badge-secondary';
+                return 'light';
                 break;
 
             case TasksStatusConstant::PENDING:
-                return 'badge badge-warning';
+                return 'warning';
                 break;
 
             case TasksStatusConstant::DEVELOPING:
-                return 'badge badge-primary';
+                return 'info';
                 break;
 
             case TasksStatusConstant::TESTING:
-                return 'badge badge-info';
+                return 'purple';
                 break;
 
             case TasksStatusConstant::DONE:
             default:
-                return 'badge badge-success';
+                return 'success';
                 break;
         }
     }

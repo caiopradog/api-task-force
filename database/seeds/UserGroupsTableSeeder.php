@@ -17,7 +17,11 @@ class UserGroupsTableSeeder extends Seeder
         $userGroup->save();
 
         $userGroup = new App\Models\UserGroup();
-        $userGroup->name = 'Site';
+        $userGroup->name = 'Gerente';
+        $userGroup->save();
+
+        $userGroup = new App\Models\UserGroup();
+        $userGroup->name = 'Desenvolvedor';
         $userGroup->save();
     }
 }

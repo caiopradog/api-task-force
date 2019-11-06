@@ -115,7 +115,6 @@ class UserService
      */
     public function create(User $user, $sendPassword = true)
     {
-
         try {
             DB::transaction(function () use($user, $sendPassword){
                 if ($sendPassword){
@@ -130,11 +129,15 @@ class UserService
 
                 $user->email = trim($user->email);
 
+                if (is_null($user->api_token)) {
+                    $user->api_token = \Illuminate\Support\Str::random(80);
+                }
+
                 if (!$user->save())
                     throw new Exception('Erro ao inserir no banco de dados');
 
                 //set Role to user..
-                $this->assingRole($user, $user->user_group_id);
+                $this->assignRole($user, $user->user_group_id);
 
                 if($sendPassword){
                     if (!$this->sendPasswordEmail($user, $generatePassword))
@@ -144,7 +147,6 @@ class UserService
                 return true;
             });
         } catch (Exception $exception) {
-            dd($exception->getMessage());
             return false;
         }
 
@@ -169,7 +171,7 @@ class UserService
         return $user->delete();
     }
 
-    public function assingRole(User $user, $user_group_id)
+    public function assignRole(User $user, $user_group_id)
     {
         $userGroup = UserGroup::query()->find($user_group_id);
 

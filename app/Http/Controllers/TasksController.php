@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Helper;
 use App\Models\Task;
-use Carbon\Carbon;
-use Faker\Generator as Faker;
 use App\Constants\TasksCategoryConstant;
 use App\Constants\TasksStatusConstant;
 use App\Services\TaskService;
+use App\Services\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class TasksController extends Controller
 {
-
     /**
      * Get a validator for an incoming registration request.
      *
@@ -54,7 +55,7 @@ class TasksController extends Controller
         }
 
         $tasks->transform(function ($task) {
-            $task->status_badge = $task->badge();
+            $task->status_color = $task->status_color();
             return $task;
         });
 
@@ -62,9 +63,49 @@ class TasksController extends Controller
             ->json($tasks);
     }
 
+    public function calendar(TaskService $taskService)
+    {
+        $dateField = request()->get('dateField', 'start_date');
+        $tasks = $taskService->list(request()->toArray())->orderBy($dateField, 'asc')->get();
+
+        $calendar = [];
+        $tasks->each(function ($task) use ($dateField, &$calendar) {
+            $date = $task->{$dateField};
+            if ($task->status == 'Finalizado') {
+                $class = 'calendar-done';
+            } else if ($date < date('Y-m-d')) {
+                $class = 'calendar-danger';
+            } else if ($task->status == 'Pendente') {
+                $class = 'calendar-todo';
+            } else if ($task->status == 'Em Andamento') {
+                $class = 'calendar-doing';
+            } else if ($task->status == 'Qualidade') {
+                $class = 'calendar-quality';
+            } else {
+                $class = 'calendar-backlog';
+            }
+            $timeRemaining = $task->time_planned - $task->time_used;
+            $timeRemaining = substr(Helper::convertSecToTime($timeRemaining), 0, -3);
+            $title = $timeRemaining.' | '.$task->name;
+            $calendar[] = [
+                'start' => $date.'T00:00:00',
+                'title' => $title,
+                'id' => $task->id,
+                'classNames' => $class,
+                'allDay' => true,
+            ];
+        });
+
+        return response()
+            ->json($calendar);
+    }
+
     public function task($id, TaskService $taskService)
     {
-        $task = $taskService->findTaskById($id);
+        $withRelations = request()->get('withRelations', false);
+        $task = $taskService->findTaskById($id, $withRelations);
+
+        $task->status_color = $task->status_color();
 
         return response()
             ->json($task);
@@ -162,5 +203,12 @@ class TasksController extends Controller
             return response()
                 ->json(['msg' => "Não foi possível deletar a tarefa, tente novamente mais tarde."], 400);
         }
+    }
+
+    public function assign_tasks() {
+        Artisan::queue('assign:tasks');
+
+        return response()
+            ->json(['msg' => "As tarefas estão sendo analisadas e atribuídas, por favor, aguarde um momento."], 200);
     }
 }

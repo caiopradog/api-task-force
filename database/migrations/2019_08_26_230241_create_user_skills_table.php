@@ -18,10 +18,12 @@ class CreateUserSkillsTable extends Migration
 
             $table->increments('id');
             $table->enum('skill', $category->toArray());
+            $table->integer('user_id')->unsigned();
             $table->integer('level');
             $table->timestamps();
             $table->softDeletes();
 
+            $table->foreign('user_id')->references('id')->on('users');
         });
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helper;
 use App\Models\Task;
 use Cache;
 use Carbon\Carbon;
@@ -39,34 +40,55 @@ class TaskService
 
     /**
      * @param $task
+     * @param bool $withRelations
      * @return \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|null|static|static[]
      */
-    public function findTaskById($task)
+    public function findTaskById($task, $withRelations = false)
     {
-        return $this->query()->find($task);
+        $query = $this->query();
+
+        if ($withRelations) {
+            $query = $query
+                ->with('sprint:id,name')
+                ->with('epic:id,name')
+                ->with('devUser:id,name')
+                ->with('createdUser:id,name')
+                ->with('project:id,name');
+        }
+
+        return $query->find($task);
     }
 
     /**
-     * @param array $search
+     * @param array $conditions
+     * @param bool $withRelations
      * @return $this|\Illuminate\Database\Eloquent\Builder
      */
-    public function list(array $conditions = [])
+    public function list(array $conditions = [], $withRelations = true)
     {
         $search = data_get($conditions, 'search', false);
         $status = data_get($conditions, 'status', false);
         $category = data_get($conditions, 'category', false);
         $deadlineStart = data_get($conditions, 'deadlineStart', false);
         $deadlineEnd = data_get($conditions, 'deadlineEnd', false);
-        $devUserID = data_get($conditions, 'devUser_id', false);
-        $qaUserID = data_get($conditions, 'qaUser_id', false);
-        $projectID = data_get($conditions, 'project_id', false);
-        $epicID = data_get($conditions, 'epic_id', false);
-        $sprintID = data_get($conditions, 'sprint_id', false);
+        $plannedDateStart = data_get($conditions, 'plannedDateStart', false);
+        $plannedDateEnd = data_get($conditions, 'plannedDateEnd', false);
+        $devUserID = data_get($conditions, 'devUserId', false);
+        $qaUserID = data_get($conditions, 'qaUserId', false);
+        $projectID = data_get($conditions, 'projectId', false);
+        $epicID = data_get($conditions, 'epicId', false);
+        $sprintID = data_get($conditions, 'sprintId', false);
 
-        $query = $this->query()
-            ->with('sprint:id,name')
-            ->with('epic:id,name')
-            ->with('project:id,name');
+        $query = $this->query();
+
+        if ($withRelations) {
+            $query = $query
+                ->with('sprint:id,name')
+                ->with('epic:id,name')
+                ->with('devUser:id,name')
+                ->with('createdUser:id,name')
+                ->with('project:id,name');
+        }
 
         if ($search) {
             $query = $query->where('name', 'like', "%{$search}%");
@@ -82,6 +104,10 @@ class TaskService
 
         if ($deadlineStart && $deadlineEnd) {
             $query = $query->whereBetween('deadline', [$deadlineStart, $deadlineEnd]);
+        }
+
+        if ($plannedDateStart && $plannedDateEnd) {
+            $query = $query->whereBetween('start_date', [$plannedDateStart, $plannedDateEnd]);
         }
 
         if ($devUserID) {
@@ -113,9 +139,17 @@ class TaskService
      */
     public function create(Task $task)
     {
-        $task->time_planned = $this->convertTimeToSec($task->time_planned);
-        $task->time_used = $this->convertTimeToSec($task->time_used);
-        $task->deadline = Carbon::createFromTimeString($task->deadline)->format('Y-m-d');
+        if ($task->time_planned && strpos($task->time_planned, ':') !== false) {
+            $task->time_planned = Helper::convertTimeToSec($task->time_planned);
+        }
+
+        if ($task->time_used && strpos($task->time_used, ':') !== false) {
+            $task->time_used = Helper::convertTimeToSec($task->time_used);
+        }
+
+        if (!Carbon::hasFormat($task->deadline, 'Y-m-d')) {
+            $task->deadline = Carbon::createFromTimeString($task->deadline)->format('Y-m-d');
+        }
 
         return $task->save();
     }
@@ -136,11 +170,5 @@ class TaskService
     public function delete(Task $task)
     {
         return $task->delete();
-    }
-
-    public function convertTimeToSec($time) {
-        $time = explode(':', $time);
-
-        return $time[0]*3600 + (isset($time[1]) ? $time[1]*60 : 0);
     }
 }

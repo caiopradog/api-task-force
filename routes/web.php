@@ -10,3 +10,6 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+Route::get('/assign_tasks', 'TasksController@assign_tasks');
+Route::get('/calendar', 'TasksController@calendar');

@@ -20,12 +20,12 @@ class TasksTableSeeder extends Seeder
         DB::table('sprints')->truncate();
         DB::table('projects')->truncate();
 
-        for ($p = 0; $p < 10;$p++) {
+        for ($p = 0; $p < 5;$p++) {
             $project = App\Models\Project::create([
                 'name' => $faker->sentence(3),
                 'description' => $faker->paragraph,
                 'status' => 'Ativo',
-                'deadline' => date('Y-m-t', strtotime('+'.($p+2).' months')),
+                'deadline' => date('Y-m-t', strtotime('+'.($p+1).' months')),
             ]);
 
             $epic = [];
@@ -41,8 +41,8 @@ class TasksTableSeeder extends Seeder
 
             $sprint = [];
             for ($s = 0;$s < 10;$s++) {
-                $startDate = date('Y-m-d', strtotime('+3 days +'.$s.' weeks'));
-                $endDate = date('Y-m-d', strtotime($startDate.' +5 days'));
+                $startDate = date('Y-m-d', strtotime('next sunday +'.$s.' weeks'));
+                $endDate = date('Y-m-d', strtotime($startDate.' +6 days'));
                 $sprint[] = App\Models\Sprint::create([
                     'name' => $faker->sentence(3),
                     'description' => $faker->paragraph,
@@ -54,23 +54,32 @@ class TasksTableSeeder extends Seeder
             }
             $sprint = collect($sprint);
 
+            $priorities = range(1,50);
             for ($t = 0;$t < 50;$t++) {
+                $priorityKey = rand(0, count($priorities) - 1);
+
+                $priority = $priorities[$priorityKey];
+                unset($priorities[$priorityKey]);
+                $priorities = array_values($priorities);
+
                 App\Models\Task::create([
                     'name' => $faker->sentence(3),
                     'description' => $faker->paragraph,
-                    'status' => App\Constants\TasksStatusConstant::getConstants()->random(),
+//                    'status' => App\Constants\TasksStatusConstant::getConstants()->random(),
+                    'status' => "Pendente",
                     'category' => App\Constants\TasksCategoryConstant::getConstants()->random(),
-                    'deadline' => $faker->dateTimeBetween('now', '+2 months'),
-                    'time_planned' => rand(0,8)*3600,
+                    'deadline' => $faker->dateTimeBetween('+1 week', '+2 months'),
+                    'time_planned' => rand(1,3)*3600,
                     'time_used' => 0,
-                    'priority' => $t,
+                    'priority' => $priority,
                     'project_id' => $project->id,
                     'epic_id' => $epic->random()->id,
                     'sprint_id' => $sprint->random()->id,
-                    'dev_user_id' => \App\Models\User::all()->random()->id,
-                    'qa_user_id' => \App\Models\User::all()->random()->id
+//                    'dev_user_id' => \App\Models\User::all()->random()->id,
+//                    'qa_user_id' => \App\Models\User::all()->random()->id
                 ]);
             }
+            $this->command->info("Project {$p} created");
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1');

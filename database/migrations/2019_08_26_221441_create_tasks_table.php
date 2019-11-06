@@ -30,8 +30,8 @@ class CreateTasksTable extends Migration
             $table->integer('project_id')->unsigned();
             $table->integer('epic_id')->unsigned();
             $table->integer('sprint_id')->unsigned();
-            $table->integer('dev_user_id')->unsigned();
-            $table->integer('qa_user_id')->unsigned();
+            $table->integer('dev_user_id')->nullable()->unsigned();
+            $table->integer('qa_user_id')->nullable()->unsigned();
             $table->integer('user_created_id')->nullable()->unsigned();
             $table->integer('user_updated_id')->nullable()->unsigned();
             $table->integer('user_deleted_id')->nullable()->unsigned();

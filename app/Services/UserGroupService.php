@@ -25,7 +25,7 @@ class UserGroupService
      */
     public function __construct(UserGroup $userGroup)
     {
-        $this->user = $userGroup;
+        $this->userGroup = $userGroup;
     }
 
     /**
@@ -33,7 +33,7 @@ class UserGroupService
      */
     private function query()
     {
-        return $this->user->query();
+        return $this->userGroup->query();
     }
 
     /**
