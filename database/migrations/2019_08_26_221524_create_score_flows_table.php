@@ -23,9 +23,11 @@ class CreateScoreFlowsTable extends Migration
             $table->softDeletes();
 
             $table->integer('reward_id')->nullable()->unsigned();
-            $table->integer('user_id')->nullable()->unsigned();
+            $table->integer('task_id')->nullable()->unsigned();
+            $table->integer('user_id')->unsigned();
 
             $table->foreign('reward_id')->references('id')->on('rewards');
+            $table->foreign('task_id')->references('id')->on('tasks');
             $table->foreign('user_id')->references('id')->on('users');
         });
     }

@@ -17,10 +17,12 @@ class CreateTaskFilesTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->string('path');
+            $table->integer('user_created_id')->nullable()->unsigned();
 
             $table->timestamps();
             $table->softDeletes();
 
+            $table->foreign('user_created_id')->references('id')->on('users');
             $table->integer('task_id')->nullable()->unsigned();
             $table->foreign('task_id')->references('id')->on('tasks');
         });

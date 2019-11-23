@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Helper;
+use App\Models\ScoreFlow;
 use App\Models\Task;
+use App\Models\TaskComment;
 use Cache;
 use Carbon\Carbon;
+use Auth;
 use Mail;
 use DB;
 
@@ -51,6 +54,8 @@ class TaskService
             $query = $query
                 ->with('sprint:id,name')
                 ->with('epic:id,name')
+                ->with('taskComments')
+                ->with('taskComments.createdUser')
                 ->with('devUser:id,name')
                 ->with('createdUser:id,name')
                 ->with('project:id,name');
@@ -85,6 +90,8 @@ class TaskService
             $query = $query
                 ->with('sprint:id,name')
                 ->with('epic:id,name')
+                ->with('taskComments')
+                ->with('taskComments.createdUser')
                 ->with('devUser:id,name')
                 ->with('createdUser:id,name')
                 ->with('project:id,name');
@@ -147,10 +154,6 @@ class TaskService
             $task->time_used = Helper::convertTimeToSec($task->time_used);
         }
 
-        if (!Carbon::hasFormat($task->deadline, 'Y-m-d')) {
-            $task->deadline = Carbon::createFromTimeString($task->deadline)->format('Y-m-d');
-        }
-
         return $task->save();
     }
 
@@ -160,6 +163,10 @@ class TaskService
      */
     public function update(Task $task)
     {
+        if ($task->status == 'Finalizado') {
+            $this->calculateTaskScore($task);
+        }
+
         return $this->create($task);
     }
 
@@ -170,5 +177,71 @@ class TaskService
     public function delete(Task $task)
     {
         return $task->delete();
+    }
+
+    public function calculateTaskScore(Task $task)
+    {
+        $userService = app('App\Services\UserService');
+        $taskCommentService = app('App\Services\TaskCommentService');
+        $scoreFlowService = app('App\Services\ScoreFlowService');
+
+        $taskComments = $task->taskComments;
+        $user = $task->devUser;
+
+        // Pontos base = horas planejadas * 100
+        $basePoints = $task->time_planned/36;
+        $positive = 1;
+        $negative = 1;
+        $text = "O usuário {$user->name} finalizou a tarefa {$task->name}!\nPontos base pela tarefa: {$basePoints} (Horas planejadas * 100)\n";
+
+        // Se acertou na estimativa de horas
+        if ($task->time_planned == $task->time_used) {
+            $positive += 0.25;
+            $text .= "Estimativa de horas correta! :D +25%\n";
+        }
+
+        if (Carbon::now() <= $task->deadline) { // Se entregou na data de entrega ou antes
+            $dateMultiplier = 0.25 + 0.05*$task->deadline->diffInDays(Carbon::now());
+            $text .= "Entregue antes da data de entrega! :D +".($dateMultiplier*100)."% (25% + 5% para cada dia adiantado)\n";
+            $positive += $dateMultiplier;
+        } else { // Se atrasou a tarefa
+            $dateMultiplier = 0.05*$task->deadline->diffInDays(Carbon::now());
+            $text .= "Tarefa atrasada... :( -".($dateMultiplier*100)."% (-5% para cada dia atrasado)\n";
+            $negative -= $dateMultiplier;
+        }
+
+        if ($taskComments->where('type', 3)->count() > 0) { // Pra cada vez que a tarefa foi reprovada
+            $reproveMultiplier = 0.2*$taskComments->where('type', 3)->count();
+            $text .= "Tarefa reprovada... :( -".($reproveMultiplier*100)."% (-20% para reprovação)\n";
+            $negative -= $reproveMultiplier;
+        }
+
+        $finalScore = $basePoints*$positive*$negative;
+        $text .= "Total: {$finalScore}! ({$basePoints}*".($positive*100)."%*".($negative*100)."%)";
+
+        $user->current_score += $finalScore;
+        $user->total_score += $finalScore;
+
+        if ($userService->update($user)) {
+            $taskComment = new TaskComment();
+
+            $taskComment->task_id = $task->id;
+            $taskComment->comment = $text;
+            $taskComment->time = 0;
+            $taskComment->type = 5;
+            $taskComment->user_created_id = Auth::user()->id;
+
+            $taskCommentService->create($taskComment);
+
+            $scoreFlow = new ScoreFlow();
+
+            $scoreFlow->task_id = $task->id;
+            $scoreFlow->text = $text;
+            $scoreFlow->score = $finalScore;
+            $scoreFlow->type = 1;
+            $scoreFlow->user_id = Auth::user()->id;
+
+            $scoreFlowService->create($scoreFlow);
+        }
     }
 }

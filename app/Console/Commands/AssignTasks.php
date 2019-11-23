@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\TaskService;
 use App\Services\UserService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -47,8 +48,8 @@ class AssignTasks extends Command
         $log = PHP_EOL;
         $usersSkills = [];
         $usersCalendar = [];
-        $start = date('Y-m').'-01';
-        $end = date('Y-m-t');
+        $start = Carbon::now();
+        $end = Carbon::parse('last day of this month');
         $userService->list()->select(['id', 'name'])->get()->each(function ($user) use (&$usersSkills, $taskService, &$usersCalendar, $start, $end) {
             $skills = $user->user_skills->pluck('level', 'skill');
 
@@ -59,8 +60,8 @@ class AssignTasks extends Command
             $usersCalendar[$user->id] = [];
             $taskService->list([
                 'devUserId' => $user->id,
-                'plannedDateStart' => $start,
-                'plannedDateEnd' => $end
+                'plannedDateStart' => $start->format('Y-m-d'),
+                'plannedDateEnd' => $end->format('Y-m-d')
             ])->orderBy('start_date', 'asc')->get()->each(function ($task) use ($user, &$usersCalendar) {
                 if (isset($usersCalendar[$user->id][$task->start_date])) {
                     $usersCalendar[$user->id][$task->start_date] += $task->time_planned;
@@ -83,15 +84,15 @@ class AssignTasks extends Command
 
             $neededSkill->each(function ($users) use ($task, $usersCalendar, &$selectedUserId, &$selectedDate, $start, $end) {
                 collect($users)->shuffle()->each(function ($user) use ($task, $usersCalendar, &$selectedUserId, &$selectedDate, $start, $end) {
-                    $date = $start;
-                    do {
-                        if (!isset($usersCalendar[$user][$date]) || (28800 - $task->time_planned - $usersCalendar[$user][$date]) >= 0) {
+                    $period = \Carbon\CarbonPeriod::create($start, '1 day', $end);
+                    foreach ($period as $key => $date) {
+                        $fDate = $date->format('Y-m-d');
+                        if (!isset($usersCalendar[$user][$fDate]) || (28800 - $task->time_planned - $usersCalendar[$user][$fDate]) >= 0 && $date->isWeekday()) {
                             $selectedUserId = $user;
-                            $selectedDate = $date;
+                            $selectedDate = $fDate;
                             return false;
                         }
-                        $date = date('Y-m-d', strtotime($date.' +1 day'));
-                    } while ($date != $end);
+                    }
                 });
                 if ($selectedUserId && $selectedDate) {
                     return false;

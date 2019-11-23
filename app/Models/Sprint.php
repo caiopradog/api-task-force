@@ -2,12 +2,22 @@
 
 namespace App\Models;
 
+use App\Constants\DefaultStatusConstant;
 use App\Observers\DeleteObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sprint extends Model
 {
+    protected $appends = [
+        'status_color'
+    ];
+
+    protected $dates = [
+        'start_date',
+        'end_date',
+    ];
+
     use SoftDeletes;
 
     public static function boot() {
@@ -21,5 +31,22 @@ class Sprint extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * @return string
+     */
+    public function getStatusColorAttribute()
+    {
+        switch ($this->status) {
+            case DefaultStatusConstant::INACTIVE:
+                return 'danger';
+                break;
+
+            case DefaultStatusConstant::ACTIVE:
+            default:
+                return 'success';
+                break;
+        }
     }
 }

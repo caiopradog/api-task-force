@@ -46,10 +46,11 @@ class SprintService
     }
 
     /**
-     * @param array $search
+     * @param array $conditions
+     * @param boolean $withRelations
      * @return $this|\Illuminate\Database\Eloquent\Builder
      */
-    public function list(array $conditions = [])
+    public function list($conditions, $withRelations)
     {
         $search = data_get($conditions, 'search', false);
         $status = data_get($conditions, 'status', false);
@@ -58,6 +59,11 @@ class SprintService
         $projectID = data_get($conditions, 'project_id', false);
 
         $query = $this->query();
+
+        if ($withRelations) {
+            $query = $query
+                ->with('project');
+        }
 
         if ($search) {
             $query = $query->where('name', 'like', "%{$search}%");

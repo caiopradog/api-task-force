@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
 {
+    protected $appends = [
+        'status_color'
+    ];
+
+    protected $dates = [
+        'start_date',
+        'deadline'
+    ];
+
     use SoftDeletes;
 
     public static function boot() {
@@ -32,6 +41,14 @@ class Task extends Model
         $secs = floor($time % 60);
 
         return sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function taskComments()
+    {
+        return $this->hasMany(TaskComment::class);
     }
 
     /**
@@ -85,7 +102,7 @@ class Task extends Model
     /**
      * @return string
      */
-    public function status_color()
+    public function getStatusColorAttribute()
     {
         switch ($this->status) {
             case TasksStatusConstant::BACKLOG:

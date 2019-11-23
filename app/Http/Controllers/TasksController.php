@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TaskComment;
+use App\Models\User;
+use App\Services\TaskCommentService;
+use Auth;
 use App\Helper;
 use App\Models\Task;
 use App\Constants\TasksCategoryConstant;
 use App\Constants\TasksStatusConstant;
 use App\Services\TaskService;
-use App\Services\UserService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Log;
 
 class TasksController extends Controller
 {
@@ -33,7 +36,7 @@ class TasksController extends Controller
             'time_planned' => 'required',
             'time_used' => 'required',
             'priority' => 'required',
-            'qa_user_id' => 'required',
+//            'qa_user_id' => 'required',
             'dev_user_id' => 'required',
             'description' => 'required|string'
         ], [
@@ -53,11 +56,6 @@ class TasksController extends Controller
         } else {
             $tasks = $tasks->get();
         }
-
-        $tasks->transform(function ($task) {
-            $task->status_color = $task->status_color();
-            return $task;
-        });
 
         return response()
             ->json($tasks);
@@ -88,7 +86,7 @@ class TasksController extends Controller
             $timeRemaining = substr(Helper::convertSecToTime($timeRemaining), 0, -3);
             $title = $timeRemaining.' | '.$task->name;
             $calendar[] = [
-                'start' => $date.'T00:00:00',
+                'start' => $date->format('Y-m-d H:i:s'),
                 'title' => $title,
                 'id' => $task->id,
                 'classNames' => $class,
@@ -104,8 +102,6 @@ class TasksController extends Controller
     {
         $withRelations = request()->get('withRelations', false);
         $task = $taskService->findTaskById($id, $withRelations);
-
-        $task->status_color = $task->status_color();
 
         return response()
             ->json($task);
@@ -145,7 +141,8 @@ class TasksController extends Controller
         $task->name = $request->get('name');
         $task->status = $request->get('status');
         $task->category = $request->get('category');
-        $task->deadline = $request->get('deadline');
+        $task->deadline = Carbon::parse($request->get('deadline'));
+        $task->start_date = Carbon::parse($request->get('start_date'));
         $task->project_id = $request->get('project_id');
         $task->sprint_id = $request->get('sprint_id');
         $task->epic_id = $request->get('epic_id');
@@ -155,6 +152,7 @@ class TasksController extends Controller
         $task->qa_user_id = $request->get('qa_user_id');
         $task->dev_user_id = $request->get('dev_user_id');
         $task->description = $request->get('description');
+        $task->user_created_id = Auth::user()->id;
 
         if ($taskService->create($task)) {
             return response()
@@ -173,7 +171,8 @@ class TasksController extends Controller
         $task->name = $request->get('name');
         $task->status = $request->get('status');
         $task->category = $request->get('category');
-        $task->deadline = $request->get('deadline');
+        $task->deadline = Carbon::parse($request->get('deadline'));
+        $task->start_date = Carbon::parse($request->get('start_date'));
         $task->project_id = $request->get('project_id');
         $task->sprint_id = $request->get('sprint_id');
         $task->epic_id = $request->get('epic_id');
@@ -183,6 +182,7 @@ class TasksController extends Controller
         $task->qa_user_id = $request->get('qa_user_id');
         $task->dev_user_id = $request->get('dev_user_id');
         $task->description = $request->get('description');
+        $task->user_updated_id = Auth::user()->id;
 
         if ($taskService->update($task)) {
             return response()
@@ -202,6 +202,115 @@ class TasksController extends Controller
         } else {
             return response()
                 ->json(['msg' => "Não foi possível deletar a tarefa, tente novamente mais tarde."], 400);
+        }
+    }
+
+    public function add_comment($taskId, TaskService $taskService, TaskCommentService $taskCommentService) {
+        $task = $taskService->findTaskById($taskId);
+        $taskComment = new TaskComment();
+
+        $taskComment->task_id = $taskId;
+        $taskComment->comment = request()->get('comment');
+        $taskComment->time = request()->get('time', 0);
+        $taskComment->type = 1;
+        $taskComment->user_created_id = Auth::user()->id;
+
+        if ($taskCommentService->create($taskComment)) {
+            $task->time_used = $task->time_used + $taskComment->time;
+            $taskService->update($task);
+            return response()
+                ->json(['msg' => "Comentário adicionado com sucesso!", 'comment' => $taskComment], 200);
+        } else {
+            return response()
+                ->json(['msg' => "Não foi possível adicionar um comentário, tente novamente mais tarde."], 400);
+        }
+    }
+
+    public function update_status($id, TaskService $taskService, TaskCommentService $taskCommentService) {
+        $task = $taskService->findTaskById($id);
+
+        $status = collect(TasksStatusConstant::getConstants())->values();
+        $statusIndex = $status->search($task->status);
+        $newStatus = $status[$statusIndex+1];
+
+        if (request()->filled('status'))
+            $newStatus = request()->get('status');
+
+        $task->status = $newStatus;
+        $task->user_updated_id = Auth::user()->id;
+
+        $taskComment = new TaskComment();
+
+        $taskComment->task_id = $id;
+        $taskComment->comment = "Status alterado para: ".$newStatus;
+        $taskComment->time = 0;
+        $taskComment->type = 2;
+        $taskComment->user_created_id = Auth::user()->id;
+
+        if ($taskService->update($task)) {
+            $taskCommentService->create($taskComment);
+            $taskComment->user = Auth::user()->name;
+            return response()
+                ->json(['msg' => "Status atualizado com sucesso!", 'task' => $task, 'comment' => $taskComment], 200);
+        } else {
+            return response()
+                ->json(['msg' => "Não foi possível atualizar o status, tente novamente mais tarde."], 400);
+        }
+    }
+
+    public function reprove_task($id, TaskService $taskService, TaskCommentService $taskCommentService) {
+        $task = $taskService->findTaskById($id);
+
+        $task->status = TasksStatusConstant::PENDING;
+        $task->user_updated_id = Auth::user()->id;
+
+        $taskComment = new TaskComment();
+
+        $taskComment->task_id = $id;
+        $taskComment->comment = "Tarefa Reprovada";
+        $taskComment->time = 0;
+        $taskComment->type = 3;
+        $taskComment->user_created_id = Auth::user()->id;
+
+        if ($taskService->update($task)) {
+            $taskCommentService->create($taskComment);
+            $taskComment->user = Auth::user()->name;
+            return response()
+                ->json(['msg' => "Status atualizado com sucesso!", 'task' => $task, 'comment' => $taskComment], 200);
+        } else {
+            return response()
+                ->json(['msg' => "Não foi possível atualizar o status, tente novamente mais tarde."], 400);
+        }
+    }
+
+    public function approve_task($id, TaskService $taskService, TaskCommentService $taskCommentService) {
+        $task = $taskService->findTaskById($id);
+
+        if (!request()->expectsJson()) {
+            $user = User::first();
+        } else {
+            $user = Auth::user();
+        }
+
+        $task->status = TasksStatusConstant::DONE;
+        $task->user_updated_id = $user->id;
+
+        $taskComment = new TaskComment();
+
+        $taskComment->task_id = $id;
+        $taskComment->comment = "Tarefa Aprovada!";
+        $taskComment->time = 0;
+        $taskComment->type = 4;
+        $taskComment->user_created_id = $user->id;
+
+        if ($taskService->update($task)) {
+//            $taskCommentService->create($taskComment);
+            $taskComment->user = $user->name;
+            return response()
+                ->json(['msg' => "Status atualizado com sucesso!", 'task' => $task, 'comment' => $taskComment], 200);
+        } else {
+            return response()
+                ->json(['msg' => "Não foi possível atualizar o status, tente novamente mais tarde."], 400);
         }
     }
 

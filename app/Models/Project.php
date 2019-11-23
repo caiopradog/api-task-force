@@ -2,12 +2,21 @@
 
 namespace App\Models;
 
+use App\Constants\DefaultStatusConstant;
 use App\Observers\DeleteObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Project extends Model
 {
+    protected $appends = [
+        'status_color'
+    ];
+
+    protected $dates = [
+        'deadline'
+    ];
+
     use SoftDeletes;
 
     public static function boot() {
@@ -37,5 +46,22 @@ class Project extends Model
     public function tasks()
     {
         return $this->hasMany(Task::class);
+    }
+
+    /**
+     * @return string
+     */
+    public function getStatusColorAttribute()
+    {
+        switch ($this->status) {
+            case DefaultStatusConstant::INACTIVE:
+                return 'danger';
+                break;
+
+            case DefaultStatusConstant::ACTIVE:
+            default:
+                return 'success';
+                break;
+        }
     }
 }
