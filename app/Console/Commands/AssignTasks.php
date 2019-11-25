@@ -48,7 +48,7 @@ class AssignTasks extends Command
         $log = PHP_EOL;
         $usersSkills = [];
         $usersCalendar = [];
-        $start = Carbon::now();
+        $start = Carbon::parse('first day of this month');
         $end = Carbon::parse('last day of this month');
         $userService->list()->select(['id', 'name'])->get()->each(function ($user) use (&$usersSkills, $taskService, &$usersCalendar, $start, $end) {
             $skills = $user->user_skills->pluck('level', 'skill');
@@ -87,7 +87,7 @@ class AssignTasks extends Command
                     $period = \Carbon\CarbonPeriod::create($start, '1 day', $end);
                     foreach ($period as $key => $date) {
                         $fDate = $date->format('Y-m-d');
-                        if (!isset($usersCalendar[$user][$fDate]) || (28800 - $task->time_planned - $usersCalendar[$user][$fDate]) >= 0 && $date->isWeekday()) {
+                        if ((!isset($usersCalendar[$user][$fDate]) || (28800 - $task->time_planned - $usersCalendar[$user][$fDate]) >= 0) && $date->isWeekday()) {
                             $selectedUserId = $user;
                             $selectedDate = $fDate;
                             return false;

@@ -20,7 +20,7 @@ class TasksTableSeeder extends Seeder
         DB::table('sprints')->truncate();
         DB::table('projects')->truncate();
 
-        for ($p = 0; $p < 5;$p++) {
+        for ($p = 0; $p < 10;$p++) {
             $project = App\Models\Project::create([
                 'name' => "Projeto ".($p+1),
                 'description' => $faker->paragraph,
@@ -71,7 +71,7 @@ class TasksTableSeeder extends Seeder
                     'status' => "Pendente",
                     'category' => App\Constants\TasksCategoryConstant::getConstants()->random(),
                     'deadline' => $faker->dateTimeBetween('+1 week', '+2 months'),
-                    'time_planned' => rand(1,3)*3600,
+                    'time_planned' => rand(1,8)*3600,
                     'time_used' => 0,
                     'priority' => $priority,
                     'project_id' => $project->id,
@@ -82,7 +82,7 @@ class TasksTableSeeder extends Seeder
 //                    'qa_user_id' => \App\Models\User::all()->random()->id
                 ]);
             }
-            $this->command->info("Project {$p} created");
+            $this->command->info("Project ".($p+1)." created");
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
