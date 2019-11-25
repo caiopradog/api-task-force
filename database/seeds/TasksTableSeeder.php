@@ -31,7 +31,7 @@ class TasksTableSeeder extends Seeder
             $epic = [];
             for ($e = 0;$e < 5;$e++) {
                 $epic[] = App\Models\Epic::create([
-                    'name' => "Épico P".($p+1)." ".($e+1+$p*5),
+                    'name' => "Épico ".($e+1+$p*5)." P".($p+1) ,
                     'description' => $faker->paragraph,
                     'status' => 'Ativo',
                     'project_id' => $project->id
@@ -44,7 +44,7 @@ class TasksTableSeeder extends Seeder
                 $startDate = date('Y-m-d', strtotime('next sunday +'.$s.' weeks'));
                 $endDate = date('Y-m-d', strtotime($startDate.' +6 days'));
                 $sprint[] = App\Models\Sprint::create([
-                    'name' => "Sprint P".($p+1)." ".($s+1+$p*10),
+                    'name' => "Sprint ".($s+1+$p*10)." P".($p+1) ,
                     'description' => $faker->paragraph,
                     'status' => 'Ativo',
                     'start_date' => $startDate,
@@ -54,8 +54,9 @@ class TasksTableSeeder extends Seeder
             }
             $sprint = collect($sprint);
 
-            $priorities = range(1,50);
-            for ($t = 0;$t < 50;$t++) {
+            $taskQtd = 50;
+            $priorities = range(1,$taskQtd);
+            for ($t = 0;$t < $taskQtd;$t++) {
                 $priorityKey = rand(0, count($priorities) - 1);
 
                 $priority = $priorities[$priorityKey];
@@ -65,7 +66,7 @@ class TasksTableSeeder extends Seeder
                 $randSprint = $sprint->random();
 
                 App\Models\Task::create([
-                    'name' => "Tarefa P".($p+1)." E".($randEpic->id)." S".($randSprint->id)." ".($t+1+$p*5),
+                    'name' => "Tarefa ".($t+1+$p*5)." P".($p+1)." E".($randEpic->id)." S".($randSprint->id),
                     'description' => $faker->paragraph,
 //                    'status' => App\Constants\TasksStatusConstant::getConstants()->random(),
                     'status' => "Pendente",
