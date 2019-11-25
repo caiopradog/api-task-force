@@ -82,4 +82,12 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/sprint', "SprintsController@add_sprint");
     Route::put('/sprint/{id?}', "SprintsController@edit_sprint");
     Route::delete('/sprint/{id}', "SprintsController@delete_sprint");
+
+    Route::get('/reward/{id}', "RewardsController@reward");
+    Route::get('/rewards', "RewardsController@rewards");
+    //Rotas para add/edit
+    Route::put('/buy_reward', "RewardsController@buy_reward");
+    Route::put('/reward', "RewardsController@add_reward");
+    Route::put('/reward/{id?}', "RewardsController@edit_reward");
+    Route::delete('/reward/{id}', "RewardsController@delete_reward");
 });

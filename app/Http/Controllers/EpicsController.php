@@ -96,14 +96,14 @@ class EpicsController extends Controller
         $epic->status = $request->get('status');
         $epic->project_id = $request->get('project_id');
         $epic->description = $request->get('description');
-        $epic->user_created_id = Auth::user()->id;
+        $epic->user_updated_id = Auth::user()->id;
 
         if ($epicService->update($epic)) {
             return response()
                 ->json(['msg' => "Épico atualizado com sucesso!", 'epic' => $epic], 200);
         } else {
             return response()
-                ->json(['msg' => "Não foi possível fazer o cadastro, tente novamente mais tarde."], 400);
+                ->json(['msg' => "Não foi possível fazer a atualização, tente novamente mais tarde."], 400);
         }
     }
 

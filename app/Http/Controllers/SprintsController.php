@@ -102,14 +102,14 @@ class SprintsController extends Controller
         $sprint->start_date = Carbon::parse($request->get('start_date'));
         $sprint->end_date = Carbon::parse($request->get('end_date'));
         $sprint->description = $request->get('description');
-        $sprint->user_created_id = Auth::user()->id;
+        $epic->user_updated_id = Auth::user()->id;
 
         if ($sprintService->update($sprint)) {
             return response()
                 ->json(['msg' => "Sprint atualizada com sucesso!", 'sprint' => $sprint], 200);
         } else {
             return response()
-                ->json(['msg' => "Não foi possível fazer o cadastro, tente novamente mais tarde."], 400);
+                ->json(['msg' => "Não foi possível fazer a atualização, tente novamente mais tarde."], 400);
         }
     }
 
